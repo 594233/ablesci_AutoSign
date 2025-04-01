@@ -1,5 +1,6 @@
 name: keyantong_Auto_login
 on:
+  workflow_dispatch:
   schedule:
     - cron: "00 21 * * *"
 jobs:
