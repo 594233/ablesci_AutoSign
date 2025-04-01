@@ -6,11 +6,11 @@ jobs:
   Auto_sign:
     runs-on: windows-latest
     steps:
-      - users:
+      - uses: actions/checkout@v2
       - name: Set up Python 3.7
-        uses:
-        With:
-          python-version: 3.7.2
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.7.2'
       - name: requirements
         run: |
           python -m pip install --upgrade pip
