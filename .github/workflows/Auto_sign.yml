@@ -15,10 +15,10 @@ jobs:
       - name: requirements
         run: |
           python -m pip install --upgrade pip
-          pip3 install -r requirements.txt
-      - name: Chekin
+          pip3 install -r .github/workflows/requirements.txt
+      - name: Sign
         run: |
-          python3 ./Auto_sign_Keyantong.py
+          python3 Auto_sign_Keyantong.py
 env:
   username: ${{ secrets.USERNAME }}
   password: ${{ secrets.PASSWORD }}
