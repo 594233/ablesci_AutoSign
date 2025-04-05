@@ -20,6 +20,5 @@ jobs:
         run: |
           python3 Auto_sign_Keyantong.py
 env:
-  username: ${{ secrets.USERNAME }}
-  password: ${{ secrets.PASSWORD }}
+  pass_dict: ${{ secrets.PASS_DICT }}
 
