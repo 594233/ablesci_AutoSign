@@ -2,8 +2,9 @@ import json
 import requests
 from bs4 import BeautifulSoup
 import os
-username = os.environ['username']
-password = os.environ['password']
+
+pass_dict = json.loads(os.environ['pass_dict'])
+print("共{}位".format(len(pass_dict)))
 
 headers = {
     "accept": "application/json, text/javascript, */*; q=0.01",
@@ -73,5 +74,8 @@ def get_sign():
 
     print(response.text)
     print(response)
-Cookie = get_cookies(username, password)
-get_sign()
+
+for username in pass_dict:
+    password = pass_dict[username]
+    Cookie = get_cookies(username, password)
+    get_sign()
