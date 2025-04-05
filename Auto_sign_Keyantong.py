@@ -4,7 +4,6 @@ from bs4 import BeautifulSoup
 import os
 
 pass_dict = json.loads(os.environ['pass_dict'])
-print("共{}位".format(len(pass_dict)).encode('utf-8').decode('utf-8'))
 
 headers = {
     "accept": "application/json, text/javascript, */*; q=0.01",
