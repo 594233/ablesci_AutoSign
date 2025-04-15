@@ -2,7 +2,7 @@ name: keyantong_Auto_login
 on:
   workflow_dispatch:
   schedule:
-    - cron: "00 08 * * *"
+    - cron: "00 22 * * *"
 jobs:
   Auto_sign:
     runs-on: windows-latest
