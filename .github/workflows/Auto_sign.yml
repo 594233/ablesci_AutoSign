@@ -2,7 +2,7 @@ name: keyantong_Auto_login
 on:
   workflow_dispatch:
   schedule:
-    - cron: "00 21 * * *"
+    - cron: "00 22 * * *"
 jobs:
   Auto_sign:
     runs-on: windows-latest
@@ -20,6 +20,5 @@ jobs:
         run: |
           python3 Auto_sign_Keyantong.py
 env:
-  username: ${{ secrets.USERNAME }}
-  password: ${{ secrets.PASSWORD }}
+  pass_dict: ${{ secrets.PASS_DICT }}
 
