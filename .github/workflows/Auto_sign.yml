@@ -8,18 +8,36 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Set up Python 3.7
-        uses: actions/setup-python@v2
+
+      - name: Cache Python installation
+        uses: actions/cache@v3
+        with:
+          path: C:\hostedtoolcache\windows\Python\3.7.2
+          key: windows-py3.7.2-x64
+          restore-keys: windows-py3.7.2
+
+      - name: Set up Python 3.7.2
+        uses: actions/setup-python@v4
         with:
           python-version: '3.7.2'
-          cache: 'pip'
-      - name: requirements
+          architecture: 'x64'
+
+      - name: Cache Python dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~\AppData\Local\pip\Cache
+            .venv
+          key: ${{ runner.os }}-py3.7-${{ hashFiles('.github/workflows/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-py3.7-
+
+      - name: Install requirements
         run: |
           python -m pip install --upgrade pip
-          pip3 install -r .github/workflows/requirements.txt
+          pip install -r .github/workflows/requirements.txt
+
       - name: Sign
-        run: |
-          python3 Auto_sign_Keyantong.py
+        run: python Auto_sign_Keyantong.py
 env:
   pass_dict: ${{ secrets.PASS_DICT }}
-
