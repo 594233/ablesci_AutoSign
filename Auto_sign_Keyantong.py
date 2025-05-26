@@ -60,6 +60,7 @@ async def main(username, password):
         }
         url = "https://www.ablesci.com/user/sign"
         async with await session.get(url, headers=headers, cookies=Cookie) as response:
+            print(username,end="")
             print(await response.text())
 
 start = time.time()
