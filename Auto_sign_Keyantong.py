@@ -4,6 +4,7 @@ import asyncio
 import time
 import aiohttp
 import os
+import random
 
 pass_dict = json.loads(os.environ['pass_dict'])
 
@@ -28,6 +29,7 @@ async def main(username, password):
             "x-requested-with": "XMLHttpRequest"
         }
         url = "https://www.ablesci.com/site/login"
+        await asyncio.sleep(random.randint(0,3)) 
         async with await session.get(url, headers=headers) as response:
             try:
                 csrf = json.loads(await response.text())['data']['csrf']
@@ -59,6 +61,7 @@ async def main(username, password):
             "x-requested-with": "XMLHttpRequest"
         }
         url = "https://www.ablesci.com/user/sign"
+        await asyncio.sleep(random.randint(0,3)) 
         async with await session.get(url, headers=headers, cookies=Cookie) as response:
             print(username,end="")
             print(await response.text())
