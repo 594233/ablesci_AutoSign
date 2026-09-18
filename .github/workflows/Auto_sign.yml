@@ -5,32 +5,16 @@ on:
     - cron: "00 22 * * *"
 jobs:
   Auto_sign:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-      - name: Cache Python installation
-        uses: actions/cache@v3
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          path: C:\hostedtoolcache\windows\Python\3.7.2
-          key: windows-py3.7.2-x64
-          restore-keys: windows-py3.7.2
-
-      - name: Set up Python 3.7.2
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.7.2'
-          architecture: 'x64'
-
-      - name: Cache Python dependencies
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~\AppData\Local\pip\Cache
-            .venv
-          key: ${{ runner.os }}-py3.7-${{ hashFiles('.github/workflows/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-py3.7-
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: .github/workflows/requirements.txt
 
       - name: Install requirements
         run: |
