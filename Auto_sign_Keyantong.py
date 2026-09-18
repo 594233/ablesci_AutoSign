@@ -2,7 +2,6 @@ import asyncio
 import json
 import os
 import random
-import sys
 
 import aiohttp
 from bs4 import BeautifulSoup
@@ -53,6 +52,15 @@ def parse_json_body(text):
         return None
 
 
+def is_already_signed(msg):
+    text = msg or ""
+    return "已" in text and "签到" in text and "今天" in text
+
+
+def is_ok_code(code):
+    return code in (0, "0")
+
+
 def extract_csrf(text):
     payload = parse_json_body(text)
     if isinstance(payload, dict):
@@ -84,75 +92,84 @@ async def read_response(response):
     return response.status, text, parse_json_body(text)
 
 
-async def sign_one(session, username, password):
-    await asyncio.sleep(random.uniform(0, 3))
-    async with session.get(
-        LOGIN_URL,
-        headers=browser_headers(referer=LOGIN_URL),
+async def request(session, method, url, **kwargs):
+    async with session.request(
+        method, url, allow_redirects=True, **kwargs
     ) as response:
-        status, login_page, _ = await read_response(response)
+        status, text, payload = await read_response(response)
+        return status, text, payload
+
+
+async def sign_one(username, password):
+    await asyncio.sleep(random.uniform(0, 3))
+    timeout = aiohttp.ClientTimeout(total=30)
+    async with aiohttp.ClientSession(timeout=timeout) as session:
+        status, login_page, _ = await request(
+            session,
+            "GET",
+            LOGIN_URL,
+            headers=browser_headers(referer=LOGIN_URL),
+        )
         if status != 200:
             raise RuntimeError(
                 "login page HTTP %s: %s" % (status, preview(login_page))
             )
         csrf_name, csrf = extract_csrf(login_page)
 
-    data = {
-        csrf_name: csrf,
-        "email": username,
-        "password": password,
-        "remember": "on",
-    }
-    async with session.post(
-        LOGIN_URL,
-        headers=browser_headers(
-            referer=LOGIN_URL,
-            origin=ORIGIN,
-            **{"content-type": "application/x-www-form-urlencoded; charset=UTF-8"},
-        ),
-        data=data,
-    ) as response:
-        status, login_text, login_json = await read_response(response)
+        data = {
+            csrf_name: csrf,
+            "email": username,
+            "password": password,
+            "remember": "on",
+        }
+        status, login_text, login_json = await request(
+            session,
+            "POST",
+            LOGIN_URL,
+            headers=browser_headers(
+                referer=LOGIN_URL,
+                origin=ORIGIN,
+                **{"content-type": "application/x-www-form-urlencoded; charset=UTF-8"},
+            ),
+            data=data,
+        )
         if status != 200:
             raise RuntimeError("login HTTP %s: %s" % (status, preview(login_text)))
         if login_json is not None:
             code = login_json.get("code")
             msg = login_json.get("msg") or preview(login_text)
-            if code not in (0, "0", None):
+            if not is_ok_code(code) and code is not None:
                 raise RuntimeError("login failed: %s" % msg)
-            if code in (0, "0"):
-                print("%s login ok: %s" % (username, msg))
+            print("%s login ok: %s" % (username, msg), flush=True)
         elif "退出" not in login_text:
             raise RuntimeError("login response is not json: %s" % preview(login_text))
 
-    await asyncio.sleep(random.uniform(0, 3))
-    async with session.get(SIGN_URL, headers=browser_headers()) as response:
-        status, sign_text, sign_json = await read_response(response)
+        await asyncio.sleep(random.uniform(0, 3))
+        status, sign_text, sign_json = await request(
+            session, "GET", SIGN_URL, headers=browser_headers()
+        )
         if status != 200:
             raise RuntimeError("sign HTTP %s: %s" % (status, preview(sign_text)))
-        if sign_json is not None:
-            msg = sign_json.get("msg") or sign_text
-            print("%s %s" % (username, msg))
-            if sign_json.get("code") not in (0, "0"):
-                raise RuntimeError("sign failed: %s" % msg)
+        if sign_json is None:
+            raise RuntimeError("sign response is not json: %s" % preview(sign_text))
+        msg = sign_json.get("msg") or sign_text
+        print("%s %s" % (username, msg), flush=True)
+        if is_ok_code(sign_json.get("code")) or is_already_signed(msg):
             return
-        raise RuntimeError("sign response is not json: %s" % preview(sign_text))
+        raise RuntimeError("sign failed: %s" % msg)
 
 
 async def main():
     if not isinstance(pass_dict, dict) or not pass_dict:
         raise SystemExit("pass_dict must be a non-empty JSON object")
 
-    timeout = aiohttp.ClientTimeout(total=30)
-    connector = aiohttp.TCPConnector(limit=8)
     failed = []
-    async with aiohttp.ClientSession(timeout=timeout, connector=connector) as session:
-        for username, password in pass_dict.items():
-            try:
-                await sign_one(session, username, password)
-            except Exception as exc:
-                failed.append(username)
-                print("%s error: %s" % (username, exc), file=sys.stderr)
+    for username, password in pass_dict.items():
+        try:
+            await sign_one(username, password)
+        except Exception as exc:
+            failed.append(username)
+            print("%s error: %s" % (username, exc), flush=True)
 
     if failed:
         raise SystemExit("failed accounts: %s" % ", ".join(failed))
